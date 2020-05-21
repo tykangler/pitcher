@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Pitcher.Midi.Devices {
+namespace Pitcher.Devices.Midi {
 
    public class InputDevice {
       

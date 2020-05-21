@@ -1,6 +1,4 @@
 .vscode/
-bin/
-obj/
-*.csproj
-drafts/
+**/bin/
+**/obj/
 interop_tests/
