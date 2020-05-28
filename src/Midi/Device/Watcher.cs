@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Pitcher.Midi.Devices {
+namespace Pitcher.Midi.Device {
    
    /// <summary>watches for connected devices</summary>
    public class Watcher {
