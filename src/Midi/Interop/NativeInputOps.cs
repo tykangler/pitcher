@@ -14,6 +14,7 @@ namespace Pitcher.Midi.Interop {
          Close,
          Data,
          LongData,
+         Error,
          LongError,
          MoreData = 0x3cc
       }
@@ -47,7 +48,7 @@ namespace Pitcher.Midi.Interop {
       public static extern MessageResult midiInClose(IntPtr handleMidiIn);
 
       [DllImport(midiLib, SetLastError = true)]
-      public static extern MessageResult midiInOpen(out MidiInSafeHandle pHandleMidiIn, 
+      public static extern MessageResult midiInOpen(out IntPtr pHandleMidiIn, 
                                                     uint deviceId,
                                                     MidiInProc callback, 
                                                     UIntPtr instance, 
@@ -78,7 +79,7 @@ namespace Pitcher.Midi.Interop {
                                                           uint cbmic);
 
       [DllImport(midiLib, SetLastError = true)]
-      public static extern MessageResult midiInGetNumDevs();
+      public static extern uint midiInGetNumDevs();
 
       #endregion
 
