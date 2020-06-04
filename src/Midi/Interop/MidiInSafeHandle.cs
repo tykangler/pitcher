@@ -4,6 +4,9 @@ using Microsoft.Win32.SafeHandles;
 namespace Pitcher.Midi.Interop {
 
    public class MidiInSafeHandle : SafeHandleMinusOneIsInvalid {
+
+      public MidiInSafeHandle() : base(true) {}
+
       public MidiInSafeHandle(IntPtr handle) : base(true) {
          SetHandle(handle);
       }

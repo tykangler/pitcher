@@ -7,5 +7,9 @@ namespace Pitcher.Midi.Events {
          this.Channel = channel;
          this.Program = program;
       }
+
+      public override string ToString() {
+         return $"ProgramChange<Channel={this.Channel}, Program={this.Program}>";
+      }
    }
 }

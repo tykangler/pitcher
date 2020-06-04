@@ -9,5 +9,10 @@ namespace Pitcher.Midi.Events {
          this.Note = note;
          this.Pressure = pressure;
       }
+
+      public override string ToString() {
+         return $"PolyphonicPressure<Channel={this.Channel}, Note={this.Note}, " + 
+                $"Pressure={this.Pressure}>";
+      }
    }
 }

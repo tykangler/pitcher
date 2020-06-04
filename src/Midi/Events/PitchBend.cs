@@ -7,5 +7,9 @@ namespace Pitcher.Midi.Events {
          this.Channel = channel;
          this.Bend = bend;
       }
+
+      public override string ToString() {
+         return $"PitchBend<Channel={this.Channel}, Bend={this.Bend}>";
+      }
    }
 }

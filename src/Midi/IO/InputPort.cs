@@ -11,13 +11,22 @@ when message is received, will print the message type and received messageParam
 TODO:
 Redirect to event so that handleMidiDeviceInput() calls OnMessageReceived with 
    MessageEventArgs (constructed from received message) */
-namespace Pitcher.Midi.Device {
+namespace Pitcher.Midi.IO {
 
    public class InputPort : IDisposable {
 
       // fields
       bool disposed;
       MidiInSafeHandle handle;
+      /* necessary because simply passing handleMidiDeviceInput into midiInOpen
+       * causes an error. The delegate is garbage collected because it is passed into an
+       * unmanaged function and is not managed.
+       * Full Doc from MSDOC:
+       * The delegate from which the function pointer was created and exposed to 
+       * unmanaged code was garbage collected. When the unmanaged component tries to 
+       * call on the function pointer, it generates an access violation.
+       * https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/callbackoncollecteddelegate-mda */ 
+      NativeInputOps.MidiInProc midiInProc;
 
       // properties
       public uint DeviceId { get; }
@@ -43,17 +52,18 @@ namespace Pitcher.Midi.Device {
          this.DeviceId = deviceId;
          this.ProductName = caps.productName;
          this.ProductId = caps.productId;
+         this.midiInProc += handleMidiDeviceInput;
          this.disposed = false;
       }
 
       public void Start() {
-         var openCode = NativeInputOps.midiInOpen(out IntPtr ptrHandle, this.DeviceId, 
-                                                  this.handleMidiDeviceInput, UIntPtr.Zero, 
+         var openCode = NativeInputOps.midiInOpen(out this.handle, this.DeviceId, 
+                                                  this.midiInProc, UIntPtr.Zero, 
                                                   NativeInputOps.CallbackFlag.CallbackFunction);
          if (IsError(openCode)) {
             throw new IOException($"{openCode} returned with device id {this.DeviceId}");
          }
-         this.handle = new MidiInSafeHandle(ptrHandle);
+         // this.handle = new MidiInSafeHandle(ptrHandle);
          var startCode = NativeInputOps.midiInStart(this.handle);
          if (IsError(startCode)) {
             throw new IOException($"{startCode} returned with device id {this.DeviceId}");
@@ -69,6 +79,7 @@ namespace Pitcher.Midi.Device {
          if (!disposed) {
             this.disposed = true;
             if (disposing) {
+               this.midiInProc = null;
                handle?.Dispose();
             }
             // dispose unmanaged (no unmanaged)
@@ -78,44 +89,40 @@ namespace Pitcher.Midi.Device {
       bool IsError(NativeInputOps.MessageResult code) 
          => code != NativeInputOps.MessageResult.MMSYSERR_NOERROR;
 
-      void handleMidiDeviceInput(MidiInSafeHandle handleMidiIn, 
-                                 NativeInputOps.MidiMessage message, 
+      void handleMidiDeviceInput(IntPtr handleMidiIn, 
+                                 NativeInputOps.MidiMessage messageType, 
                                  UIntPtr instance, 
-                                 uint messageParam1, 
-                                 uint messageParam2) {
-         // messageParam2 is timestamp except when reserved in open and close
-         switch (message) {
-            case NativeInputOps.MidiMessage.Open:
-               // reserved
-               Console.WriteLine("open ");
+                                 uint message, 
+                                 uint timestamp) {
+         switch (messageType) {
+            case NativeInputOps.MidiMessage.Open: // params reserved
+            case NativeInputOps.MidiMessage.Close: // params reserved
                break;
-            case NativeInputOps.MidiMessage.Close:
-               // reserved
-               Console.WriteLine("close ");
+            case NativeInputOps.MidiMessage.Data: // message received
+               // little endian correct
+               byte[] data = BitConverter.GetBytes(message);
+               OnMessageReceived(new MessageEventArgs(data, timestamp));
                break;
-            case NativeInputOps.MidiMessage.Data:
-               // message received
-               Console.WriteLine("data " + Convert.ToString(messageParam1, 16));
+            case NativeInputOps.MidiMessage.LongData: // ptr to midihdr struct (input buffer)
+               byte[] longData = BitConverter.GetBytes(message);
+               OnMessageReceived(new MessageEventArgs(longData, timestamp));
                break;
-            case NativeInputOps.MidiMessage.LongData:
-               // pointer to midihdr struct (input buffer)
-               Console.WriteLine("longdata " + Convert.ToString(messageParam1, 16));
-               break;
-            case NativeInputOps.MidiMessage.MoreData:
+            case NativeInputOps.MidiMessage.MoreData: // message received
                // midi_io_status flag must be used in midiinopen
-               // message received
-               Console.WriteLine("moredata " + Convert.ToString(messageParam1, 16));
+               byte[] moreData = BitConverter.GetBytes(message);
+               OnMessageReceived(new MessageEventArgs(moreData, timestamp));
                break;
-            case NativeInputOps.MidiMessage.Error:
-               // invalid midi message
-               Console.WriteLine("error " + Convert.ToString(messageParam1, 16));
+            case NativeInputOps.MidiMessage.Error: // invalid midi message
+               byte[] errorData = BitConverter.GetBytes(message);
+               OnMessageReceived(new MessageEventArgs(errorData, timestamp));
                break;
             case NativeInputOps.MidiMessage.LongError:
                // pointer to midihdr struct (input buffer with invalid message)
-               Console.WriteLine("longerror " + Convert.ToString(messageParam1, 16));
+               byte[] longErrorData = BitConverter.GetBytes(message);
+               OnMessageReceived(new MessageEventArgs(longErrorData, timestamp));
                break;
             default:
-               Console.WriteLine("no registered message type");
+               OnMessageReceived(new MessageEventArgs());
                break;
          }
       }
@@ -125,16 +132,25 @@ namespace Pitcher.Midi.Device {
    public class MessageEventArgs : EventArgs {
       
       const byte hexDigitBits = 4;
-      const byte topBits = 0XF0;
+      const byte botBits = 0X0F;
 
-      public MidiStatus EventStatus { get; }
-      IMidiEvent Event { get; }
+      public IMidiEvent Event { get; }
+      public byte[] Message { get; }
+      public uint TimeStamp { get; }
 
-      (MidiStatus, byte) SplitStatusByte(byte val)
-         => ((MidiStatus) (val >> hexDigitBits), (byte) (val & topBits));
+      public MessageEventArgs() {
+         Event = null;
+         Message = null;
+         TimeStamp = 0;
+      }
 
-      public MessageEventArgs(byte[] midiMessage) {
-         var (status, channel) = SplitStatusByte(midiMessage[0]);
+      public MessageEventArgs(byte[] midiMessage, uint timeStamp) {
+         if (midiMessage == null) {
+            throw new IOException("midiMessage can't be null. Use default ctor");
+         }
+         this.Message = midiMessage;
+         MidiStatus status = (MidiStatus) (midiMessage[0] >> hexDigitBits);
+         byte channel = (byte) (midiMessage[0] & botBits);
          switch (status) {
             case MidiStatus.NoteOff:
                Event = new NoteEvent(channel, midiMessage[1], midiMessage[2], 
@@ -160,8 +176,10 @@ namespace Pitcher.Midi.Device {
                Event = new ProgramChange(channel, midiMessage[1]);
                break;
             default:
+               Event = null;
                break;
          }
+         this.TimeStamp = timeStamp;
       }
    }
 

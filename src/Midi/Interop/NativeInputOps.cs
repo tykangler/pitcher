@@ -38,7 +38,9 @@ namespace Pitcher.Midi.Interop {
          MIDIERR_STILLPLAYING = 0x29
       }
 
-      public delegate void MidiInProc(MidiInSafeHandle handleMidiIn, 
+      // use IntPtr for the handleMidiIn because marshaling error
+      // "can't marshal SafeHandle from unmanaged to managed
+      public delegate void MidiInProc(IntPtr handleMidiIn, 
                                       MidiMessage message, 
                                       UIntPtr instance, 
                                       uint messageParam1, 
@@ -48,7 +50,7 @@ namespace Pitcher.Midi.Interop {
       public static extern MessageResult midiInClose(IntPtr handleMidiIn);
 
       [DllImport(midiLib, SetLastError = true)]
-      public static extern MessageResult midiInOpen(out IntPtr pHandleMidiIn, 
+      public static extern MessageResult midiInOpen(out MidiInSafeHandle pHandleMidiIn, 
                                                     uint deviceId,
                                                     MidiInProc callback, 
                                                     UIntPtr instance, 

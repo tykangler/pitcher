@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Midi\Midi.csproj" />
+    <ProjectReference Include="..\..\src\Midi\Midi.csproj"/>
   </ItemGroup>
 
 </Project>

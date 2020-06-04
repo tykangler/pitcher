@@ -7,5 +7,9 @@ namespace Pitcher.Midi.Events {
          this.Channel = channel;
          this.Pressure = pressure;
       }
+
+      public override string ToString() {
+         return $"ChannelPressure<Channel={this.Channel}, Pressure={this.Pressure}>";
+      }
    }
 }
