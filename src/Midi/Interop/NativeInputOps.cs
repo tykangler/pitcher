@@ -3,40 +3,11 @@ using System;
 
 namespace Pitcher.Midi.Interop {
 
-   internal static class NativeInputOps {
+   public static class NativeInputOps {
 
       const string midiLib = "winmm.dll";
 
       #region native methods
-
-      public enum MidiMessage : uint {
-         Open = 0x3c1,
-         Close,
-         Data,
-         LongData,
-         Error,
-         LongError,
-         MoreData = 0x3cc
-      }
-
-      public enum CallbackFlag : uint {
-         CallbackNull = 0,
-         MidiIoStatus = 0x20,
-         CallbackWindows = 0x10000,
-         CallbackThread = 0x20000,
-         CallbackFunction = 0x30000,
-      }
-
-      public enum MessageResult : uint {
-         MMSYSERR_NOERROR = 0,
-         MMSYSERR_BADDEVICEID = 2,
-         MMSYSERR_ALLOCATED = 4,
-         MMSYSERR_INVALHANDLE = 5,
-         MMSYSERR_NOMEM = 7,
-         MMSYSERR_INVALFLAG = 0xa,
-         MMSYSERR_INVALPARAM = 0xb,
-         MIDIERR_STILLPLAYING = 0x29
-      }
 
       // use IntPtr for the handleMidiIn because marshaling error
       // "can't marshal SafeHandle from unmanaged to managed
@@ -78,7 +49,7 @@ namespace Pitcher.Midi.Interop {
       [DllImport(midiLib, SetLastError = true)]
       public static extern MessageResult midiInGetDevCaps(uint deviceId, 
                                                           out MidiInCaps caps, 
-                                                          uint cbmic);
+                                                          uint capsSize);
 
       [DllImport(midiLib, SetLastError = true)]
       public static extern uint midiInGetNumDevs();

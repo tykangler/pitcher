@@ -86,37 +86,37 @@ namespace Pitcher.Midi.IO {
          }
       }
 
-      bool IsError(NativeInputOps.MessageResult code) 
-         => code != NativeInputOps.MessageResult.MMSYSERR_NOERROR;
+      bool IsError(MessageResult code) 
+         => code != MessageResult.MMSYSERR_NOERROR;
 
       void handleMidiDeviceInput(IntPtr handleMidiIn, 
-                                 NativeInputOps.MidiMessage messageType, 
+                                 MidiMessage messageType, 
                                  UIntPtr instance, 
                                  uint message, 
                                  uint timestamp) {
          switch (messageType) {
-            case NativeInputOps.MidiMessage.Open: // params reserved
-            case NativeInputOps.MidiMessage.Close: // params reserved
+            case MidiMessage.Open: // params reserved
+            case MidiMessage.Close: // params reserved
                break;
-            case NativeInputOps.MidiMessage.Data: // message received
+            case MidiMessage.Data: // message received
                // little endian correct
                byte[] data = BitConverter.GetBytes(message);
                OnMessageReceived(new MessageEventArgs(data, timestamp));
                break;
-            case NativeInputOps.MidiMessage.LongData: // ptr to midihdr struct (input buffer)
+            case MidiMessage.LongData: // ptr to midihdr struct (input buffer)
                byte[] longData = BitConverter.GetBytes(message);
                OnMessageReceived(new MessageEventArgs(longData, timestamp));
                break;
-            case NativeInputOps.MidiMessage.MoreData: // message received
+            case MidiMessage.MoreData: // message received
                // midi_io_status flag must be used in midiinopen
                byte[] moreData = BitConverter.GetBytes(message);
                OnMessageReceived(new MessageEventArgs(moreData, timestamp));
                break;
-            case NativeInputOps.MidiMessage.Error: // invalid midi message
+            case MidiMessage.Error: // invalid midi message
                byte[] errorData = BitConverter.GetBytes(message);
                OnMessageReceived(new MessageEventArgs(errorData, timestamp));
                break;
-            case NativeInputOps.MidiMessage.LongError:
+            case MidiMessage.LongError:
                // pointer to midihdr struct (input buffer with invalid message)
                byte[] longErrorData = BitConverter.GetBytes(message);
                OnMessageReceived(new MessageEventArgs(longErrorData, timestamp));
