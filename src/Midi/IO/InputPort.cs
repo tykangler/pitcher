@@ -62,11 +62,11 @@ namespace Pitcher.Midi.IO {
          // get device information
          this.midiInProc += handleMidiDeviceInput;
          this.disposed = false;
-         var openCode = NativeInputOps.midiInOpen(out this.handle, this.DeviceId, 
+         var openCode = NativeInputOps.midiInOpen(out this.handle, this.Device.DeviceId, 
                                                   this.midiInProc, UIntPtr.Zero, 
-                                                  NativeInputOps.CallbackFlag.CallbackFunction);
+                                                  CallbackFlag.CallbackFunction);
          if (IsError(openCode)) {
-            throw new IOException($"{openCode} returned with device id {this.DeviceId}");
+            throw new IOException($"{openCode} returned with device id {this.Device.DeviceId}");
          }
          // this.handle = new MidiInSafeHandle(ptrHandle);
       }
@@ -74,7 +74,7 @@ namespace Pitcher.Midi.IO {
       public void Start() {
          var startCode = NativeInputOps.midiInStart(this.handle);
          if (IsError(startCode)) {
-            throw new IOException($"{startCode} returned with device id {this.DeviceId}");
+            throw new IOException($"{startCode} returned with device id {this.Device.DeviceId}");
          }
       }
 
@@ -140,6 +140,9 @@ namespace Pitcher.Midi.IO {
       
       const byte hexDigitBits = 4;
       const byte botBits = 0X0F;
+
+      static readonly Func<byte[], IMidiEvent>[] eventMap = 
+         {(m => new NoteEvent(m))};
 
       public IMidiEvent Event { get; }
       public byte[] Message { get; }

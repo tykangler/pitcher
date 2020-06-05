@@ -13,7 +13,7 @@ namespace Pitcher.Midi.Interop {
 
       protected override bool ReleaseHandle() {
          return NativeInputOps.midiInClose(this.handle) 
-                == NativeInputOps.MessageResult.MMSYSERR_NOERROR;
+                == MessageResult.MMSYSERR_NOERROR;
       }
    }
 }

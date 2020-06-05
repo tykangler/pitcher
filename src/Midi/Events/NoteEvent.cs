@@ -2,8 +2,9 @@ namespace Pitcher.Midi.Events {
 
    public class NoteEvent : IMidiEvent {
 
-      public enum Sound { On, Off }
+      public enum Sound { Off, On }
       
+      public MidiStatus Status { get => (MidiStatus) ((int) this.Type + 8); }
       public byte Note { get; }
       public byte Velocity { get; }
       public byte Channel { get; }
@@ -14,6 +15,13 @@ namespace Pitcher.Midi.Events {
          this.Note = note;
          this.Velocity = velocity;
          this.Type = type;
+      }
+
+      public uint Pack() {
+         int statusByte = (((byte) Status) << 2) | Channel;
+         int noteByte = Note << 8;
+         int velocityByte = Note << 16;
+         return (uint) (velocityByte | noteByte | statusByte);
       }
 
       public override bool Equals(object other) {

@@ -15,7 +15,7 @@ namespace Pitcher.Midi.IO {
          public string Technology { get; }
          public ushort NumVoices { get; }
          public ushort NumSimultaneousNotes { get; }
-         public IList<uint> SupportedChannels { get; }
+         public IList<int> SupportedChannels { get; }
          public OptSupport SupportedFunctionality { get; }
 
          public DeviceInformation(uint deviceId) {
@@ -36,10 +36,10 @@ namespace Pitcher.Midi.IO {
             this.SupportedFunctionality = caps.optSupport;
          }
 
-         static IList<uint> ExtractChannels(ushort channelMask) {
-            IList<uint> channels = new List<uint>();
+         static IList<int> ExtractChannels(ushort channelMask) {
+            IList<int> channels = new List<int>();
             for (int i = 0; i < 16; ++i) {
-               if ((channelMask >> i) & 1 == 1) {
+               if (((channelMask >> i) & 1) == 1) {
                   channels.Add(i);
                }
             }
@@ -55,18 +55,19 @@ namespace Pitcher.Midi.IO {
          this.Device = new DeviceInformation(deviceId);
          this.disposed = false;
          var openCode = NativeOutputOps.midiOutOpen(
-            this.handle, this.Device.DeviceId, null, UIntPtr.Zero, CallbackFlag.CallbackNull);
+            out this.handle, this.Device.DeviceId, null, UIntPtr.Zero, CallbackFlag.CallbackNull);
          if (IsError(openCode)) {
             throw new IOException($"{openCode} thrown with device id {this.Device.DeviceId}");
          }
-
       }
 
-      public bool SendShortMessage(IMidiEvent event) {
-         return true;
+      public bool SendShortMessage(IMidiEvent midiEvent) {
+         uint message = midiEvent.Pack();
+         var sendCode = NativeOutputOps.midiOutShortMessage(this.handle, message);
+         return !IsError(sendCode);
       }
 
-      static bool IsError(MessageResult code) => code != MessageResult.MMSYSERR_NOERORR;
+      static bool IsError(MessageResult code) => code != MessageResult.MMSYSERR_NOERROR;
    
       public void Dispose() {      
          this.Dispose(true);
