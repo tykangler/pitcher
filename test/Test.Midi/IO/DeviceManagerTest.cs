@@ -26,7 +26,7 @@ namespace Pitcher.Test.Midi.IO {
       [Fact]
       public void InputDevicesReturnsCorrectNumberDevices() {
          uint numInputDevices = DeviceManager.NumInputDevices;
-         IEnumerable<InputPort> devices = DeviceManager.InputDevices;
+         IEnumerable<InputPort.DeviceInformation> devices = DeviceManager.InputDevices;
          Assert.True(numInputDevices == devices.Count());
       }
 
