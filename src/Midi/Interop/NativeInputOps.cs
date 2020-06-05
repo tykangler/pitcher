@@ -43,7 +43,7 @@ namespace Pitcher.Midi.Interop {
          public uint driverVersion;
          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)]
          public string productName;
-         public uint dwSupport;
+         public uint dwSupport; // reserved - must be 0
       }
 
       [DllImport(midiLib, SetLastError = true)]
@@ -58,7 +58,7 @@ namespace Pitcher.Midi.Interop {
 
       #region public helpers
 
-      public static uint midiInCapsSize() => (uint) Marshal.SizeOf<MidiInCaps>();
+      public static uint midiInCapsSize { get => (uint) Marshal.SizeOf<MidiInCaps>(); }
 
       #endregion
    }

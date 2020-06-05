@@ -36,11 +36,11 @@ namespace Pitcher.Midi.Interop {
          public uint version;
          [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
          public string productName;
-         public ushort technology;
+         public Technology technology;
          public ushort voices;
          public ushort notes;
          public ushort channelMask;
-         public uint optSupport;
+         public OptSupport optSupport;
       }
       
       [DllImport(midiLib, SetLastError = true)]
@@ -55,6 +55,6 @@ namespace Pitcher.Midi.Interop {
 
       #region helper methods
 
-      public static uint midiOutCapsSize() => (uint) Marshal.SizeOf<MidiOutCaps>();
+      public static uint midiOutCapsSize { get => (uint) Marshal.SizeOf<MidiOutCaps>(); }
    }
 }

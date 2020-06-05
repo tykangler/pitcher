@@ -14,25 +14,43 @@ Redirect to event so that handleMidiDeviceInput() calls OnMessageReceived with
 namespace Pitcher.Midi.IO {
 
    public class InputPort : IDisposable {
+      
+      public class DeviceInformation {
+         public uint DeviceId { get; }
+         public string ProductName { get; }
+         public ushort ProductId { get; }
+         public uint Version { get; }
+
+         public DeviceInformation(uint deviceId) {
+            uint capsSize = NativeInputOps.midiInCapsSize;
+            var devCapsCode = NativeInputOps.midiInGetDevCaps(deviceId, 
+                                                              out NativeInputOps.MidiInCaps caps, 
+                                                              capsSize);
+            if (IsError(devCapsCode)) {
+               throw new IOException(devCapsCode + " returned with device id " + deviceId);
+            }
+            this.DeviceId = deviceId;
+            this.ProductName = caps.productName;
+            this.ProductId = caps.productId;
+         }
+      }
 
       // fields
       bool disposed;
       MidiInSafeHandle handle;
-      /* necessary because simply passing handleMidiDeviceInput into midiInOpen
+      /* necessary because only passing handleMidiDeviceInput into midiInOpen
        * causes an error. The delegate is garbage collected because it is passed into an
        * unmanaged function and is not managed.
        * Full Doc from MSDOC:
        * The delegate from which the function pointer was created and exposed to 
        * unmanaged code was garbage collected. When the unmanaged component tries to 
        * call on the function pointer, it generates an access violation.
-       * https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/callbackoncollecteddelegate-mda */ 
+       * https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/callbackoncollecteddelegate-mda 
+       */ 
       NativeInputOps.MidiInProc midiInProc;
 
       // properties
-      public uint DeviceId { get; }
-      public string ProductName { get; }
-      public ushort ProductId { get; }
-
+      public DeviceInformation Device { get; }
       // events
       public event EventHandler<MessageEventArgs> MessageReceived;
 
@@ -42,21 +60,8 @@ namespace Pitcher.Midi.IO {
 
       public InputPort(uint deviceId) {
          // get device information
-         uint capsSize = NativeInputOps.midiInCapsSize();
-         var devCapsCode = NativeInputOps.midiInGetDevCaps(deviceId, 
-                                                           out NativeInputOps.MidiInCaps caps, 
-                                                           capsSize);
-         if (IsError(devCapsCode)) {
-            throw new IOException(devCapsCode + " returned with device id " + deviceId);
-         }
-         this.DeviceId = deviceId;
-         this.ProductName = caps.productName;
-         this.ProductId = caps.productId;
          this.midiInProc += handleMidiDeviceInput;
          this.disposed = false;
-      }
-
-      public void Start() {
          var openCode = NativeInputOps.midiInOpen(out this.handle, this.DeviceId, 
                                                   this.midiInProc, UIntPtr.Zero, 
                                                   NativeInputOps.CallbackFlag.CallbackFunction);
@@ -64,6 +69,9 @@ namespace Pitcher.Midi.IO {
             throw new IOException($"{openCode} returned with device id {this.DeviceId}");
          }
          // this.handle = new MidiInSafeHandle(ptrHandle);
+      }
+
+      public void Start() {
          var startCode = NativeInputOps.midiInStart(this.handle);
          if (IsError(startCode)) {
             throw new IOException($"{startCode} returned with device id {this.DeviceId}");
@@ -86,8 +94,7 @@ namespace Pitcher.Midi.IO {
          }
       }
 
-      bool IsError(MessageResult code) 
-         => code != MessageResult.MMSYSERR_NOERROR;
+      static bool IsError(MessageResult code) => code != MessageResult.MMSYSERR_NOERROR;
 
       void handleMidiDeviceInput(IntPtr handleMidiIn, 
                                  MidiMessage messageType, 
