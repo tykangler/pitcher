@@ -58,7 +58,7 @@ namespace Pitcher.Midi.Interop {
 
       #region public helpers
 
-      public static uint midiInCapsSize { get => (uint) Marshal.SizeOf<MidiInCaps>(); }
+      public static uint midiInCapsSize => (uint) Marshal.SizeOf<MidiInCaps>(); 
 
       #endregion
    }

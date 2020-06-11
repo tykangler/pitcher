@@ -1,7 +1,6 @@
 namespace Pitcher.Midi.Events {
-   public class PitchBend : IMidiEvent {
-      public MidiStatus Status { get => MidiStatus.PitchBend; }
-      public byte Channel { get; }
+   public class PitchBend : MidiEvent {
+      public override uint RawMessage { get; }
       public byte Bend { get; }
 
       public PitchBend(byte channel, byte bend) {
@@ -9,9 +8,21 @@ namespace Pitcher.Midi.Events {
          this.Bend = bend;
       }
 
-      public uint Pack() {
-         int statusByte = (((byte) Status) << 2) | Channel;
-         int bendByte = Bend << 8;
+      public PitchBend(uint raw) {
+         this.RawMessage = raw;
+         var (channel, bend) = ParseMessage(raw);
+         this.Channel = channel;
+         this.Bend = bend;
+      }
+
+      (byte, byte) ParseMessage(uint raw) {
+         byte[] rawBytes = System.BitConverter.GetBytes(raw);
+         return (rawBytes[0], rawBytes[1]);
+      }
+
+      uint Pack(int channel, int bend) {
+         int statusByte = (((byte) MidiStatus.PitchBend) << 2) | channel;
+         int bendByte = bend << 8;
          return (uint) (bendByte | statusByte);
       }
 

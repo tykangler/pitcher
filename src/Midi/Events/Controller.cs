@@ -1,7 +1,6 @@
 namespace Pitcher.Midi.Events {
-   public class Controller : IMidiEvent {
-      public MidiStatus Status { get => MidiStatus.Controller; }
-      public byte Channel { get; }
+   public class Controller : MidiEvent {
+      public override uint RawMessage { get; }
       public byte ControlDevice { get; }
       public byte Which { get; }
 
@@ -9,12 +8,26 @@ namespace Pitcher.Midi.Events {
          this.Channel = channel;
          this.ControlDevice = controlDevice;
          this.Which = which;
+         this.RawMessage = Pack(channel, controlDevice, which);
       }
 
-      public uint Pack() {
-         int statusByte = (((byte) Status) << 2) | Channel;
-         int controllerByte = ControlDevice << 8;
-         int whichByte = Which << 16;
+      public Controller(uint raw) {
+         this.RawMessage = raw;
+         var (channel, controller, which) = ParseMessage(raw);
+         this.Channel = channel;
+         this.ControlDevice = controller;
+         this.Which = which;
+      }
+
+      (byte, byte, byte) ParseMessage(uint raw) {
+         byte[] rawBytes = System.BitConverter.GetBytes(raw);
+         return (rawBytes[0], rawBytes[1], rawBytes[2]);
+      } 
+
+      uint Pack(int channel, int controlDevice, int which) {
+         int statusByte = (((byte) MidiStatus.Controller) << 2) | channel;
+         int controllerByte = controlDevice << 8;
+         int whichByte = which << 16;
          return (uint) (whichByte | controllerByte | statusByte);
       }
 

@@ -51,15 +51,16 @@ namespace Pitcher.Midi.IO {
 
       // properties
       public DeviceInformation Device { get; }
-      // events
-      public event EventHandler<MessageEventArgs> MessageReceived;
 
+      // events
+      public event EventHandler<MessageEventArgs>? MessageReceived;
       protected virtual void OnMessageReceived(MessageEventArgs e) {
          MessageReceived?.Invoke(this, e);
       }
 
       public InputPort(uint deviceId) {
          // get device information
+         this.Device = new DeviceInformation(deviceId);
          this.midiInProc += handleMidiDeviceInput;
          this.disposed = false;
          var openCode = NativeInputOps.midiInOpen(out this.handle, this.Device.DeviceId, 
@@ -68,7 +69,6 @@ namespace Pitcher.Midi.IO {
          if (IsError(openCode)) {
             throw new IOException($"{openCode} returned with device id {this.Device.DeviceId}");
          }
-         // this.handle = new MidiInSafeHandle(ptrHandle);
       }
 
       public void Start() {
@@ -87,7 +87,6 @@ namespace Pitcher.Midi.IO {
          if (!disposed) {
             this.disposed = true;
             if (disposing) {
-               this.midiInProc = null;
                handle?.Dispose();
             }
             // dispose unmanaged (no unmanaged)
@@ -107,29 +106,25 @@ namespace Pitcher.Midi.IO {
                break;
             case MidiMessage.Data: // message received
                // little endian correct
-               byte[] data = BitConverter.GetBytes(message);
-               OnMessageReceived(new MessageEventArgs(data, timestamp));
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
             case MidiMessage.LongData: // ptr to midihdr struct (input buffer)
-               byte[] longData = BitConverter.GetBytes(message);
-               OnMessageReceived(new MessageEventArgs(longData, timestamp));
+               // will later send an alternate event args
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
             case MidiMessage.MoreData: // message received
                // midi_io_status flag must be used in midiinopen
-               byte[] moreData = BitConverter.GetBytes(message);
-               OnMessageReceived(new MessageEventArgs(moreData, timestamp));
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
             case MidiMessage.Error: // invalid midi message
-               byte[] errorData = BitConverter.GetBytes(message);
-               OnMessageReceived(new MessageEventArgs(errorData, timestamp));
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
             case MidiMessage.LongError:
                // pointer to midihdr struct (input buffer with invalid message)
-               byte[] longErrorData = BitConverter.GetBytes(message);
-               OnMessageReceived(new MessageEventArgs(longErrorData, timestamp));
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
             default:
-               OnMessageReceived(new MessageEventArgs());
+               OnMessageReceived(new MessageEventArgs(message, timestamp));
                break;
          }
       }
@@ -141,54 +136,23 @@ namespace Pitcher.Midi.IO {
       const byte hexDigitBits = 4;
       const byte botBits = 0X0F;
 
-      static readonly Func<byte[], IMidiEvent>[] eventMap = 
-         {(m => new NoteEvent(m))};
-
-      public IMidiEvent Event { get; }
+      public MidiEvent? Event { get; }
       public byte[] Message { get; }
       public uint TimeStamp { get; }
 
-      public MessageEventArgs() {
-         Event = null;
-         Message = null;
-         TimeStamp = 0;
-      }
-
-      public MessageEventArgs(byte[] midiMessage, uint timeStamp) {
-         if (midiMessage == null) {
-            throw new IOException("midiMessage can't be null. Use default ctor");
-         }
-         this.Message = midiMessage;
-         MidiStatus status = (MidiStatus) (midiMessage[0] >> hexDigitBits);
-         byte channel = (byte) (midiMessage[0] & botBits);
-         switch (status) {
-            case MidiStatus.NoteOff:
-               Event = new NoteEvent(channel, midiMessage[1], midiMessage[2], 
-                                     NoteEvent.Sound.Off);
-               break;
-            case MidiStatus.NoteOn:
-               Event = new NoteEvent(channel, midiMessage[1], midiMessage[2], 
-                                     NoteEvent.Sound.On);
-               break;
-            case MidiStatus.ChannelPressure:
-               Event = new ChannelPressure(channel, midiMessage[1]);
-               break;
-            case MidiStatus.Controller:
-               Event = new Controller(channel, midiMessage[1], midiMessage[2]);
-               break;
-            case MidiStatus.PitchBend:
-               Event = new PitchBend(channel, midiMessage[1]);
-               break;
-            case MidiStatus.PolyphonicPressure:
-               Event = new PolyphonicPressure(channel, midiMessage[1], midiMessage[2]);
-               break;
-            case MidiStatus.ProgramChange:
-               Event = new ProgramChange(channel, midiMessage[1]);
-               break;
-            default:
-               Event = null;
-               break;
-         }
+      public MessageEventArgs(uint message, uint timeStamp) {
+         this.Message = BitConverter.GetBytes(message);
+         MidiStatus status = (MidiStatus) (this.Message[0] >> hexDigitBits);
+         this.Event = status switch {
+            MidiStatus.NoteOff => new NoteOff(message),
+            MidiStatus.NoteOn => new NoteOn(message),
+            MidiStatus.PolyphonicPressure => new PolyphonicPressure(message),
+            MidiStatus.Controller => new Controller(message),
+            MidiStatus.PitchBend => new PitchBend(message),
+            MidiStatus.ProgramChange => new ProgramChange(message),
+            MidiStatus.ChannelPressure => new ChannelPressure(message),
+            _ => null
+         };
          this.TimeStamp = timeStamp;
       }
    }

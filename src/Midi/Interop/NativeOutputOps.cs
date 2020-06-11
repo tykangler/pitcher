@@ -18,7 +18,7 @@ namespace Pitcher.Midi.Interop {
       [DllImport(midiLib, SetLastError = true)]
       public static extern MessageResult midiOutOpen(out MidiOutSafeHandle pHandleMidiOut,
                                                      uint deviceId,
-                                                     MidiOutProc callback,
+                                                     MidiOutProc? callback,
                                                      UIntPtr instance,
                                                      CallbackFlag callbackFlag);
 
@@ -55,7 +55,7 @@ namespace Pitcher.Midi.Interop {
 
       #region helper methods
 
-      public static uint midiOutCapsSize { get => (uint) Marshal.SizeOf<MidiOutCaps>(); }
+      public static uint midiOutCapsSize => (uint) Marshal.SizeOf<MidiOutCaps>();
 
       #endregion
    }
