@@ -10,13 +10,14 @@
 
 *Readability*
 - [x] Separate NoteEvent into NoteOff and NoteOn
-- [ ] Create constructors for all midi events taking in `byte[] message` parameter
-- [ ] Make `uint Pitcher.Midi.Events.IMidiEvent.Pack()` a property with backing field
-- [ ] Populate `Pitcher.Midi.IO.InputPort.MessageEventArgs.eventMap`
+- [x] Create constructors for all midi events taking in `byte[] message` parameter
+- [x] Make `uint Pitcher.Midi.Events.IMidiEvent.Pack()` a property with backing field
 
-*Redundancy*
-- [ ] Currently passing `uint rawMessage` to `MidiEvent` constructors based status code, 
-      but `rawMessage` already contains status code. Find way to remove this redundancy.
+*Structure*
+- [ ] Restructure classes in `Events` namespace. Most should be fine, but anything dealing with
+      notes should be refactored, and may lead to additional refactoring. Look into `NoteEvent`,
+      `NoteOff`, `NoteOn`, `PolyphonicPressure`. Possibly create additional helper class for
+      dealing with note operations. Maybe a `Note` class 
 
 ## Future
 

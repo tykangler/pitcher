@@ -62,7 +62,7 @@ namespace Pitcher.Midi.IO {
       }
 
       public bool SendShortMessage(MidiEvent midiEvent) {
-         var sendCode = NativeOutputOps.midiOutShortMessage(this.handle, midiEvent.RawMessage);
+         var sendCode = NativeOutputOps.midiOutShortMsg(this.handle, midiEvent.RawMessage);
          return !IsError(sendCode);
       }
 

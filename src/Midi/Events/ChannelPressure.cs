@@ -23,7 +23,7 @@ namespace Pitcher.Midi.Events {
       }
 
       uint Pack(int channel, int pressure) {
-         int statusByte = (((byte) MidiStatus.ChannelPressure) << 2) | channel;
+         int statusByte = (((byte) MidiStatus.ChannelPressure) << 4) | channel;
          int pressureByte = pressure << 8;
          return (uint) (pressureByte | statusByte);
       }

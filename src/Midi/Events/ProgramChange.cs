@@ -21,7 +21,7 @@ namespace Pitcher.Midi.Events {
          return (rawBytes[0], rawBytes[1]);
       }
       uint Pack(int channel, int program) {
-         int statusByte = (((byte) MidiStatus.ProgramChange) << 2) | channel;
+         int statusByte = (((byte) MidiStatus.ProgramChange) << 4) | channel;
          int programByte = program << 8;
          return (uint) (programByte | statusByte);
       }

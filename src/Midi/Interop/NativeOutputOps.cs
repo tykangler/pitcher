@@ -26,8 +26,8 @@ namespace Pitcher.Midi.Interop {
       public static extern MessageResult midiOutClose(IntPtr handleMidiOut);
 
       [DllImport(midiLib, SetLastError = true)]
-      public static extern MessageResult midiOutShortMessage(MidiOutSafeHandle handleMidiOut,
-                                                             uint message);
+      public static extern MessageResult midiOutShortMsg(MidiOutSafeHandle handleMidiOut,
+                                                         uint message);
       
       [StructLayout(LayoutKind.Sequential)]
       public struct MidiOutCaps {

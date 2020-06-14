@@ -25,7 +25,7 @@ namespace Pitcher.Midi.Events {
       } 
 
       uint Pack(int channel, int controlDevice, int which) {
-         int statusByte = (((byte) MidiStatus.Controller) << 2) | channel;
+         int statusByte = (((byte) MidiStatus.Controller) << 4) | channel;
          int controllerByte = controlDevice << 8;
          int whichByte = which << 16;
          return (uint) (whichByte | controllerByte | statusByte);

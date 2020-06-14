@@ -1,3 +1,4 @@
+using System;
 namespace Pitcher.Midi.Events {
 
    /// <summary>
@@ -6,6 +7,7 @@ namespace Pitcher.Midi.Events {
    /// <remarks>
    /// In the future, this will be one of 2 factories. The other one being <c>MetaEventFactory</c>
    /// </remarks>
+   [Obsolete("Replaced with switch expressions")]
    public class GeneralEventFactory {
       readonly System.Func<uint, MidiEvent>[] generalEvents = 
          { m => new NoteOff(m), m => new NoteOn(m),

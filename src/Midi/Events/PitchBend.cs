@@ -21,7 +21,7 @@ namespace Pitcher.Midi.Events {
       }
 
       uint Pack(int channel, int bend) {
-         int statusByte = (((byte) MidiStatus.PitchBend) << 2) | channel;
+         int statusByte = (((byte) MidiStatus.PitchBend) << 4) | channel;
          int bendByte = bend << 8;
          return (uint) (bendByte | statusByte);
       }

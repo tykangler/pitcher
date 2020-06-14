@@ -9,9 +9,9 @@ namespace Pitcher.Test.Midi.IO {
 
    public class DeviceManagerTest {
 
-      // readonly ITestOutputHelper output;
+      readonly ITestOutputHelper output;
 
-      // public DeviceManagerTest(ITestOutputHelper output) => this.output = output; 
+      public DeviceManagerTest(ITestOutputHelper output) => this.output = output; 
 
       [Theory]
       [InlineData(1)]
@@ -28,6 +28,21 @@ namespace Pitcher.Test.Midi.IO {
          uint numInputDevices = DeviceManager.NumInputDevices;
          IEnumerable<InputPort.DeviceInformation> devices = DeviceManager.InputDevices;
          Assert.True(numInputDevices == devices.Count());
+      }
+
+      [Theory]
+      [InlineData(1)]
+      public void NumOutputDevicesReturnsNumConnectedDevices(uint connectedDevices) {
+         uint numOutputDevices = DeviceManager.NumOutputDevices;
+         Assert.True(numOutputDevices == connectedDevices);
+         output.WriteLine(new OutputPort.DeviceInformation(0).ProductName);
+      }
+
+      [Fact]
+      public void OutputDevicesReturnsCorrectNumberDevices() {
+         uint numOutputDevices = DeviceManager.NumOutputDevices;
+         IEnumerable<OutputPort.DeviceInformation> devices = DeviceManager.OutputDevices;
+         Assert.True(numOutputDevices == devices.Count());
       }
 
    }
