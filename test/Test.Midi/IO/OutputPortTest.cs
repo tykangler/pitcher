@@ -60,6 +60,19 @@ namespace Pitcher.Test.Midi.IO {
             }
          }
       }
+
+      [Fact]
+      public void ControllerDoesSomething() {
+         byte channel = 0;
+         byte controller = 64;
+         using (OutputPort outputPort = new OutputPort(0)) {
+            outputPort.SendShortMessage(new NoteOn(channel, "a2", 120));
+            for (int i = 0; i < 127; ++i) {
+               outputPort.SendShortMessage(new Controller(channel, controller, (byte) i));
+            }
+            Thread.Sleep(TimeSpan.FromSeconds(1.5));
+         }
+      }
    }
 
 }

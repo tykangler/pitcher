@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Midi\Midi.csproj" />
-    <ProjectReference Include="..\Device\Device.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
